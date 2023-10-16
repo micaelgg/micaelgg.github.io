@@ -9,15 +9,12 @@ website:
       - href: index.qmd
         text: Home
       - about.qmd
-      - posts.qmd # add your posts.qmd file to your navbar!
 
 
 # supplying a light ("minty") and dark ("slate") theme to toggle between
 format:
   html:
-    theme: 
-      light: minty
-      dark: solar
+    theme: lux
     css: styles.css
 
 
