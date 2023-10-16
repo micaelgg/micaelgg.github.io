@@ -1,5 +1,5 @@
 ---
-title: "Micael García"
+title: "About me"
 about:
   template: jolla
   image: profile.png
@@ -9,7 +9,7 @@ about:
       href: https://github.com/micaelgg
     - icon: linkedin
       text: Linkedin
-      href: www.linkedin.com/in/micael-garcia-gonzalez
+      href: https://www.linkedin.com/in/micael-garcia-gonzalez
 ---
 
 
