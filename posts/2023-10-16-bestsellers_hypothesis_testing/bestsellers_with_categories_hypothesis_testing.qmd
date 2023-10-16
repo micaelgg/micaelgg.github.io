@@ -1,0 +1,700 @@
+---
+title: 'Exploring Hypothesis Testing: A Series for Beginners'
+jupyter: python3
+---
+
+
+
+## 2. Data Understanding
+### 2.1 Donwload data from Kaggle
+
+```{python}
+# Import libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+```
+
+Download dataset
+
+```{python}
+from kaggle import KaggleApi
+import os
+
+# Nombre del archivo del dataset en Kaggle
+dataset_name = "bestsellers with categories.csv"
+# ID del dataset en Kaggle
+dataset_id = "sootersaalu/amazon-top-50-bestselling-books-2009-2019/"
+
+# Directorio de destino
+download_path = "./data/"
+
+# Verificar si el archivo ya existe en la carpeta de destino
+list_of_files = os.listdir(download_path)
+if any(dataset_name in filename for filename in list_of_files):
+    print("El archivo ya existe " + download_path)
+else:
+    # Autenticar con la API de Kaggle
+    api = KaggleApi()
+    api.authenticate()
+
+    # Descargar el dataset
+    api.dataset_download_files(dataset_id, path=download_path, unzip=True)
+```
+
+### 2.2 Data description
+
+```{python}
+df = pd.read_csv(download_path + dataset_name)
+df.head(30)
+```
+
+- Name
+  - Título del libro
+  - Unidad: texto (categoría)
+- Author
+  - Nombre del autor
+  - Unidad: texto (categoría)
+- User Rating
+  - Calificación promedio del libro por los usuarios
+  - Unidad: número entre 0 y 5 (con decimales)
+- Reviews
+  - Número de reseñas
+  - Unidad: número entero
+- Price
+  - Precio del libro
+  - Unidad: número entero
+- Year
+  - Año en el que el libro fue de los más vendidos
+  - Unidad: año (número entero)
+- Genre
+  - Género del libro simplificado (Fiction o Non Fiction)
+  - Unidad: categorico con dos valores posibles
+
+## 3. Data preparation
+
+### 3.1 Typecasting
+
+## 1. Business Understanding
+
+dataset source: https://www.kaggle.com/datasets/sootersaalu/amazon-top-50-bestselling-books-2009-2019/data
+
+### Context
+Datos sobre los 50 libros más vendidos en Amazon de 2009 a 2019. 
+
+### Hypothesis to Test
+
+Vamos a responder a las siguientes preguntas con validez estadística:
+
+- ¿Los géneros difieren en User Rating?
+- ¿Los géneros difieren en número de Reviews?
+- ¿Los géneros difieren en términos de precio?
+
+```{python}
+# comprobamos el tipo de datos de las columnas
+df.dtypes
+```
+
+```{python}
+columnas_categoricas = ["Genre", "Name", "Author"]
+df[columnas_categoricas] = df[columnas_categoricas].astype("category")
+```
+
+```{python}
+df.dtypes
+```
+
+### 3.2 Handling Duplicates
+
+Comprobar si hay autores o títulos iguales pero escritos diferente.
+
+```{python}
+from fuzzywuzzy import fuzz
+
+
+# Función para encontrar nombres de autores similares
+def encontrar_similares(df, columna):
+    autores = df[columna].unique()
+    duplicados = []
+
+    for i, autor1 in enumerate(autores):
+        for autor2 in autores[i + 1 :]:
+            ratio = fuzz.ratio(autor1, autor2)
+            if ratio > 90:  # Puedes ajustar este umbral según tu criterio
+                duplicados.append((autor1, autor2))
+
+    return duplicados
+
+
+```
+
+```{python}
+# Encuentra nombres de autores similares
+duplicados = encontrar_similares(df, "Author")
+
+print(
+    "Nombres de autores que se refieren al mismo autor pero están escritos diferente:"
+)
+for dup in duplicados:
+    print(dup)
+```
+
+```{python}
+# Replace the names of the Authors with the correct ones
+df = df.replace("George R. R. Martin", "George R.R. Martin")
+df = df.replace("J. K. Rowling", "J.K. Rowling")
+```
+
+```{python}
+# Encuentra nombres de títulos similares
+duplicados = encontrar_similares(df, "Name")
+
+print(
+    "Nombres de autores que se refieren al mismo autor pero están escritos diferente:"
+)
+for dup in duplicados:
+    print(dup)
+```
+
+```{python}
+# Replace the names of the Authors with the correct ones
+df = df.replace(
+    "The 5 Love Languages: The Secret to Love That Lasts",
+    "The 5 Love Languages: The Secret to Love that Lasts",
+)
+df = df.replace(
+    "The Girl Who Played with Fire (Millennium Series)",
+    "The Girl Who Played with Fire (Millennium)",
+)
+```
+
+```{python}
+df
+```
+
+```{python}
+# número de filas duplicadas
+df.duplicated().sum()
+```
+
+Es normal no encontrar duplicados en este caso, hay libros que se repiten pero es imposible que coincidan en "Year". No es un error por si mismo. Pero hay un problema. Las "Reviews" deberían ser las que el libro tenia el año en el que fue de los mas vendidos. En lugar de eso son las del último año. Esto puede deberse a que el autor del dataset no tuvo acceso al historial de las reseñas.
+
+Es importante tener en cuenta esto para el análisis.
+
+Vamos a utilizar unicamente la muestra más reciente de cada libro.
+
+```{python}
+# todos los libros con el titulo repetido
+df[df.duplicated("Name")].head(20)
+```
+
+```{python}
+# Drop duplicates
+bestsellers = df.drop_duplicates(subset="Name", keep="last")
+bestsellers
+```
+
+Resumen:
+- Hemos corregido los errores ortográficos de los títulos y autores.
+- Hemos seleccionado las muestras más recientes de cada libro.
+
+Hemos reducido el tamaño del dataset de 550 a 349 muestras.
+
+### 3.3 Outlier Analysis
+
+#### 3.3.2 Usando boxplot y IQR 
+IQR: El rango intercuartil (IQR) es la diferencia entre el tercer cuartil (Q3) y el primer cuartil (Q1). Los valores que caen por debajo de Q1 - 1.5 * IQR o por encima de Q3 + 1.5 * IQR se consideran outliers.
+
+Los valores fuera del de este rango, son los que se representa como puntos en los bloxpots.
+
+```{python}
+import plotly.express as px
+
+selected_columns = ["Reviews", "Price"]
+
+for column in selected_columns:
+    fig = px.box(df, x=column, title=f"Boxplot of {column}")
+    fig.update_layout(title_x=0.5)  # Centra el título
+    fig.show()
+```
+
+Observaciones:
+
+- age: no se detectan outliers
+- BMI: existen outliers, personas con una alta obesidad
+- charges: existen outliers, personas con cargos muy altos al seguro
+
+### 3.4 Zero & Near Zero Variance Features
+
+```{python}
+bestsellers.describe()
+```
+
+Variables númericas
+
+```{python}
+selected_columns = ["User Rating", "Reviews", "Price"]
+
+# Calcular la varianza de cada columna
+variances = bestsellers[selected_columns].var()
+
+# Definir un umbral para la varianza
+threshold = 0.1
+
+# Identificar las columnas con varianza cercana a cero o muy pequeña
+zero_variance_cols = variances[variances <= threshold].index
+
+print("Columnas con Zero & Near Zero Variance:")
+print(zero_variance_cols)
+```
+
+Variables categoricas. No tiene sentido en este analisis en este caso.
+
+Observiaciones:
+
+- No se detectan variables con Zero & Near Zero Variance
+
+### 3.5 Missing values
+
+```{python}
+bestsellers.isnull().sum()
+```
+
+Observiaciones:
+
+- No hay Missing values
+
+# 4. Hipothesis Testing
+
+Vamos a responder a las siguientes preguntas con validez estadística:
+- ¿Los géneros difieren en User Rating?
+- ¿Los géneros difieren en número de Reviews?
+- ¿Los géneros difieren en términos de precio?
+
+## ¿Los géneros difieren en User Rating?
+
+Vamos a crear una variable para cada grupo de interes y representarlos gráficamente.
+
+```{python}
+fiction_bestsellers = bestsellers[bestsellers["Genre"] == "Fiction"]
+nonfiction_bestsellers = bestsellers[bestsellers["Genre"] == "Non Fiction"]
+```
+
+```{python}
+sns.kdeplot(fiction_bestsellers["User Rating"], fill=True, color="r")
+sns.kdeplot(nonfiction_bestsellers["User Rating"], fill=True, color="b")
+plt.legend(["Fiction", "Non Fiction"])
+plt.xlabel("User Rating")
+plt.ylabel("Density")
+plt.show()
+```
+
+```{python}
+# Calcular el coeficiente de asimetría
+skewness = stats.skew(bestsellers["User Rating"])
+print("Coeficiente de asimetría:", skewness)
+
+if skewness > 0:
+    print("La distribución está positivamente sesgada.")
+elif skewness < 0:
+    print("La distribución está negativamente sesgada.")
+else:
+    print("La distribución es simétrica.")
+```
+
+Número de observaciones para cada grupo:
+
+```{python}
+bestsellers["Genre"].value_counts()
+```
+
+Realizamos un test de normalidad para cada grupo:
+
+```{python}
+from scipy import stats
+
+
+def shapiro_test(data, alpha=0.05):
+    """
+    Realiza la prueba de Shapiro-Wilk para verificar la normalidad de los datos.
+
+    Parameters:
+    data (array-like): Los datos a analizar.
+    alpha (float): Nivel de significancia.
+
+    Returns:
+    str: El resultado de la prueba.
+    """
+    statistic, p_value = stats.shapiro(data)
+
+    if p_value < alpha:
+        return (
+            "Rechazamos la hipótesis nula. Los datos no siguen una distribución normal."
+        )
+    else:
+        return "Fallamos al rechazar la hipótesis nula. Los datos pueden considerarse normalmente distribuidos."
+
+
+result_fiction = shapiro_test(fiction_bestsellers["User Rating"])
+result_nonfiction = shapiro_test(nonfiction_bestsellers["User Rating"])
+
+print("Para bestsellers de ficción:", result_fiction)
+print("Para bestsellers de no ficción:", result_nonfiction)
+```
+
+Estudiemos la relación entre las varianzas de cada grupo.
+
+```{python}
+# Realiza el Test de Levene
+statistic, p_value = stats.levene(
+    fiction_bestsellers["User Rating"], nonfiction_bestsellers["User Rating"]
+)
+
+# Nivel de significancia
+alpha = 0.05
+
+# Comprueba la significancia
+if p_value < alpha:
+    print("Rechazamos la hipótesis nula. Las varianzas no son similares")
+else:
+    print("Fallamos al rechazar la hipótesis nula. Las varianzas son similares")
+```
+
+```{python}
+# varianza de los grupos
+bestsellers.groupby(["Genre"])["User Rating"].var()
+```
+
+### 1. Seleccionamos la hipotesis y el nivel de significancia
+
+H0: El "User Rating" de los libros de ficción es igual que el de los libros de no ficción
+
+Ha: El "User Rating" de los libros de ficción es diferente que el de los libros de no ficción
+
+alpha = 0.05
+
+### 2. Identificamos el tipo de test
+
+Deseamos comparar las medias de dos grupos de nuestra Sample. Por lo que un 2-Sample t-Test parece lo adecuado. Lo primero es ver si se cumplen los requisitos del test.
+
+#### 2.1 Requisitos del test
+[Book:Hypothesis Testing An Intuitive Guide For Making Data Driven Decisions
+Page: 48
+Section: 2-Sample t-Tests]
+- Tenemos un Sample representativo de la población? Si.
+- Los datos son continuos? 
+  - En este contexto, los "User Rating" que van de 0 a 5 con un único decimal pueden considerarse como datos continuos. Sim embargo, observando las gráficas, vemos que la mayoría de los valores se encuetran en un intervalor muy pequeño (mayores a 4.0). Esto dificulta el poder considerarlo continuos.
+- Las muestras siguen una distribución normal o hay más de 15 observaciones
+  - No, las muestras no siguen una distribución normal. Pero hay más de 15 observaciones en cada grupo, gracias al teorema del límite central podemos renunciar al supuesto de normalidad.
+- Los grupos son independientes? Si.
+- Las varianzas son iguales (o al menos similares)?
+  - No.
+
+
+Por la falta de continuidad en los datos, vamos a realizar un **test no paramétrico Mann-Whitney**.
+
+[Book:Hypothesis Testing An Intuitive Guide For Making Data Driven Decisions
+Page: 341
+Section: Analyzing Likert Scale Data]
+
+Para realizar el test vamos a usar [scipy.stats.mannwhitneyu](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.mannwhitneyu.html)
+
+```{python}
+# Realiza el test de Mann-Whitney
+statistic, p_value = stats.mannwhitneyu(
+    nonfiction_bestsellers["User Rating"], fiction_bestsellers["User Rating"]
+)
+
+# Imprime los resultados
+print("Valor p:", p_value)
+
+# Comprueba la significancia
+alpha = 0.05  # Nivel de significancia
+if p_value < alpha:
+    print(
+        "Rechazamos la hipótesis nula. Hay diferencias significativas entre los grupos."
+    )
+else:
+    print(
+        "Fallamos al rechazar la hipótesis nula. No hay diferencias significativas entre los grupos."
+    )
+```
+
+## ¿Los géneros difieren en número de Reviews?
+
+Representamos gráficamente los grupos de interés.
+
+```{python}
+sns.kdeplot(fiction_bestsellers["Reviews"], fill=True, color="r")
+sns.kdeplot(nonfiction_bestsellers["Reviews"], fill=True, color="b")
+plt.legend(["Fiction", "Non Fiction"])
+plt.xlabel("User Rating")
+plt.ylabel("Density")
+plt.show()
+```
+
+```{python}
+# Calcular el coeficiente de asimetría
+skewness = stats.skew(bestsellers["Reviews"])
+print("Coeficiente de asimetría:", skewness)
+
+if skewness > 0:
+    print("La distribución está positivamente sesgada.")
+elif skewness < 0:
+    print("La distribución está negativamente sesgada.")
+else:
+    print("La distribución es simétrica.")
+```
+
+Número de observaciones para cada grupo:
+
+```{python}
+bestsellers["Genre"].value_counts()
+```
+
+Realizamos un test de normalidad para cada grupo:
+
+```{python}
+from scipy import stats
+
+
+def shapiro_test(data, alpha=0.05):
+    """
+    Realiza la prueba de Shapiro-Wilk para verificar la normalidad de los datos.
+
+    Parameters:
+    data (array-like): Los datos a analizar.
+    alpha (float): Nivel de significancia.
+
+    Returns:
+    str: El resultado de la prueba.
+    """
+    statistic, p_value = stats.shapiro(data)
+
+    if p_value < alpha:
+        return (
+            "Rechazamos la hipótesis nula. Los datos no siguen una distribución normal."
+        )
+    else:
+        return "Fallamos al rechazar la hipótesis nula. Los datos pueden considerarse normalmente distribuidos."
+
+
+result_fiction = shapiro_test(fiction_bestsellers["Reviews"])
+result_nonfiction = shapiro_test(nonfiction_bestsellers["Reviews"])
+
+print("Para bestsellers de ficción:", result_fiction)
+print("Para bestsellers de no ficción:", result_nonfiction)
+```
+
+Estudiemos la relación entre las varianzas de cada grupo.
+
+```{python}
+# varianza de los grupos
+bestsellers.groupby(["Genre"])["Reviews"].var()
+```
+
+```{python}
+# Realiza el Test de Levene
+statistic, p_value = stats.levene(
+    fiction_bestsellers["User Rating"], nonfiction_bestsellers["User Rating"]
+)
+
+# Nivel de significancia
+alpha = 0.05
+
+# Comprueba la significancia
+if p_value < alpha:
+    print("Rechazamos la hipótesis nula. Las varianzas no son similares")
+else:
+    print("Fallamos al rechazar la hipótesis nula. Las varianzas son similares")
+```
+
+### 1. Seleccionamos la hipotesis y el nivel de significancia
+
+H0: El número de Reviews medio de los libros de ficción es igual que el de los libros de no ficción
+
+Ha: El número de Reviews medio de los libros de ficción es diferente que el de los libros de no ficción
+
+alpha = 0.05
+
+### 2. Identificamos el tipo de test
+
+Deseamos comparar las medias de dos grupos de nuestra Sample. Por lo que un 2-Sample t-Test parece lo adecuado. Lo primero es ver si se cumplen los requisitos del test.
+
+#### 2.1 Requisitos del test
+[Book:Hypothesis Testing An Intuitive Guide For Making Data Driven Decisions
+Page: 48
+Section: 2-Sample t-Tests]
+- Tenemos un Sample representativo de la población? Si.
+- Los datos son continuos? Si.
+- Las muestras siguen una distribución normal o hay más de 15 observaciones
+  - No, las muestras no siguen una distribución normal. Pero hay más de 15 observaciones en cada grupo, gracias al teorema del límite central podemos renunciar al supuesto de normalidad.
+- Los grupos son independientes? Si.
+- Las varianzas son iguales (o al menos similares)?
+  - No.
+
+
+Las varianzas no son similares y su relación es de más del doble. Vamos a reliazar un test tipo **Welch's t-test**.
+
+Para realizar el test vamos a usar [scipy.stats.ttest_ind](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html).
+Para realizar este test, es necesario definir el parametro *equal_varbool* como *False*.
+
+```{python}
+# Realiza el test t de Welch (equal_var=False)
+statistic, p_value = stats.ttest_ind(
+    nonfiction_bestsellers["Reviews"], fiction_bestsellers["Reviews"], equal_var=False
+)
+
+# Imprime los resultados
+print("Valor p:", p_value)
+
+# Comprueba la significancia
+alpha = 0.05  # Nivel de significancia
+if p_value < alpha:
+    print(
+        "Rechazamos la hipótesis nula: Hay diferencias significativas entre los grupos."
+    )
+else:
+    print(
+        "No podemos rechazar la hipótesis nula: No hay diferencias significativas entre los grupos."
+    )
+```
+
+Los libros del género de ficción obtienen más Reviews que los libros de no ficción.
+
+## ¿Los géneros difieren en términos de Price?
+
+Representamos gráficamente los datos.
+
+```{python}
+sns.kdeplot(fiction_bestsellers["Price"], fill=True, color="r")
+sns.kdeplot(nonfiction_bestsellers["Price"], fill=True, color="b")
+plt.legend(["Fiction", "Non Fiction"])
+plt.xlabel("User Rating")
+plt.ylabel("Density")
+plt.show()
+```
+
+```{python}
+# Calcular el coeficiente de asimetría
+skewness = stats.skew(bestsellers["Price"])
+print("Coeficiente de asimetría:", skewness)
+
+if skewness > 0:
+    print("La distribución está positivamente sesgada.")
+elif skewness < 0:
+    print("La distribución está negativamente sesgada.")
+else:
+    print("La distribución es simétrica.")
+```
+
+Realizamos un test de normalidad para cada grupo:
+
+```{python}
+from scipy import stats
+
+
+def shapiro_test(data, alpha=0.05):
+    """
+    Realiza la prueba de Shapiro-Wilk para verificar la normalidad de los datos.
+
+    Parameters:
+    data (array-like): Los datos a analizar.
+    alpha (float): Nivel de significancia.
+
+    Returns:
+    str: El resultado de la prueba.
+    """
+    statistic, p_value = stats.shapiro(data)
+
+    if p_value < alpha:
+        return (
+            "Rechazamos la hipótesis nula. Los datos no siguen una distribución normal."
+        )
+    else:
+        return "Fallamos al rechazar la hipótesis nula. Los datos pueden considerarse normalmente distribuidos."
+
+
+result_fiction = shapiro_test(fiction_bestsellers["Price"])
+result_nonfiction = shapiro_test(nonfiction_bestsellers["Price"])
+
+print("Para bestsellers de ficción:", result_fiction)
+print("Para bestsellers de no ficción:", result_nonfiction)
+```
+
+Estudiemos la relación entre las varianzas de cada grupo.
+
+```{python}
+# Realiza el Test de Levene
+statistic, p_value = stats.levene(
+    fiction_bestsellers["Price"], nonfiction_bestsellers["Price"]
+)
+
+# Nivel de significancia
+alpha = 0.05
+
+# Comprueba la significancia
+if p_value < alpha:
+    print("Rechazamos la hipótesis nula. Las varianzas no son similares")
+else:
+    print("Fallamos al rechazar la hipótesis nula. Las varianzas son similares")
+```
+
+```{python}
+# varianza de los grupos
+bestsellers.groupby(["Genre"])["Price"].var()
+```
+
+### 1. Seleccionamos la hipotesis y el nivel de significancia
+
+H0: El precio medio de los libros de ficción es igual que el de los libros de no ficción
+
+Ha: El precio medio de los libros de ficción es diferente que el de los libros de no ficción
+
+alpha = 0.05
+
+### 2. Identificamos el tipo de test
+
+Deseamos comparar las medias de dos grupos de nuestra Sample. Por lo que un 2-Sample t-Test parece lo adecuado. Lo primero es ver si se cumplen los requisitos del test.
+
+#### 2.1 Requisitos del test
+[Book:Hypothesis Testing An Intuitive Guide For Making Data Driven Decisions
+Page: 48
+Section: 2-Sample t-Tests]
+- Tenemos un Sample representativo de la población? Si.
+- Los datos son continuos? Si.
+- Las muestras siguen una distribución normal o hay más de 15 observaciones
+  - No, las muestras no siguen una distribución normal. Pero hay más de 15 observaciones en cada grupo, gracias al teorema del límite central podemos renunciar al supuesto de normalidad.
+- Los grupos son independientes? Si.
+- Las varianzas son iguales (o al menos similares)? Si.
+
+Se cumplen los requisitos para realizar un **2-Sample t-Test**.
+
+Para realizar el test vamos a usar [scipy.stats.ttest_ind](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html).
+
+```{python}
+# Realiza el test t
+statistic, p_value = stats.ttest_ind(
+    nonfiction_bestsellers["Price"], fiction_bestsellers["Price"]
+)
+
+# Imprime los resultados
+print("Valor p:", p_value)
+
+# Comprueba la significancia
+alpha = 0.05  # Nivel de significancia
+if p_value < alpha:
+    print(
+        "Rechazamos la hipótesis nula: Hay diferencias significativas entre los grupos."
+    )
+else:
+    print(
+        "No podemos rechazar la hipótesis nula: No hay diferencias significativas entre los grupos."
+    )
+```
+
+El precio no es dependiente del género.
+

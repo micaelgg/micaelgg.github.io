@@ -3,18 +3,21 @@ project:
   output-dir: docs
 
 website:
-  title: "micaelgg.github.io"
+  title: "Micael"
   navbar:
     left:
       - href: index.qmd
         text: Home
       - about.qmd
+      - posts.qmd # add your posts.qmd file to your navbar!
 
+
+# supplying a light ("minty") and dark ("slate") theme to toggle between
 format:
   html:
-    theme: cosmo
+    theme: 
+      light: minty
+      dark: solar
     css: styles.css
-    toc: true
-
 
 
