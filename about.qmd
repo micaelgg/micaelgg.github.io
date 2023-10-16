@@ -1,5 +1,16 @@
 ---
-title: "About"
+title: "Micael García"
+about:
+  template: jolla
+  image: profile.png
+  links:
+    - icon: github
+      text: Github
+      href: https://github.com/micaelgg
+    - icon: linkedin
+      text: Linkedin
+      href: www.linkedin.com/in/micael-garcia-gonzalez
 ---
 
-About this site
+
+¡Hola! Soy Micael, un entusiasta de la tecnología y un devorador de libros empedernido. Cuando no estoy enredando con líneas de código, me sumerjo en aventuras literarias que me transportan a mundos imaginarios. Apasionado por el aprendizaje constante, combino la lógica de la programación con la creatividad de las historias. Mi mantra: 'Cada día es una página en blanco, y yo soy el autor de mi propia narrativa'. Únete a mí en este viaje donde la curiosidad es la brújula y el conocimiento es el tesoro que perseguimos. 
