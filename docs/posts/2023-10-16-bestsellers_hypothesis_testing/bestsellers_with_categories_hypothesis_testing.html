@@ -10,7 +10,7 @@
 <meta name="dcterms.date" content="2023-10-16">
 <meta name="description" content="A series of posts exploring hypothesis testing for beginners.">
 
-<title>Micael - Exploring Hypothesis Testing: A Series for Beginners 1</title>
+<title>MG - Exploring Hypothesis Testing: A Series for Beginners 1</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -120,7 +120,7 @@ require(['plotly'], function(Plotly) {
 <link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed fullcontent">
+<body class="nav-fixed">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -128,7 +128,7 @@ require(['plotly'], function(Plotly) {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container">
     <a class="navbar-brand" href="../../index.html">
-    <span class="navbar-title">Micael</span>
+    <span class="navbar-title">MG</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -143,7 +143,7 @@ require(['plotly'], function(Plotly) {
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../about.html" rel="" target="">
- <span class="menu-text">About</span></a>
+ <span class="menu-text">About me</span></a>
   </li>  
 </ul>
             <div class="quarto-navbar-tools ms-auto">
@@ -153,52 +153,95 @@ require(['plotly'], function(Plotly) {
     </nav>
 </header>
 <!-- content -->
-<header id="title-block-header" class="quarto-title-block default page-columns page-full">
-  <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-body">
-      <h1 class="title">Exploring Hypothesis Testing: A Series for Beginners 1</h1>
-                  <div>
-        <div class="description">
-          A series of posts exploring hypothesis testing for beginners.
-        </div>
-      </div>
-                          <div class="quarto-categories">
-                <div class="quarto-category">EDA</div>
-                <div class="quarto-category">hypothesis-testing</div>
-              </div>
-                  </div>
-  </div>
-    
-  
-  <div class="quarto-title-meta">
-
-      <div>
-      <div class="quarto-title-meta-heading">Author</div>
-      <div class="quarto-title-meta-contents">
-               <p>Micael García </p>
-            </div>
-    </div>
-      
-      <div>
-      <div class="quarto-title-meta-heading">Published</div>
-      <div class="quarto-title-meta-contents">
-        <p class="date">October 16, 2023</p>
-      </div>
-    </div>
-    
-      
-    </div>
-    
-  
-  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#exploring-hypothesis-testing-a-series-for-beginners" id="toc-exploring-hypothesis-testing-a-series-for-beginners" class="nav-link active" data-scroll-target="#exploring-hypothesis-testing-a-series-for-beginners">Exploring Hypothesis Testing: A Series for Beginners</a>
+  <ul class="collapse">
+  <li><a href="#business-understanding" id="toc-business-understanding" class="nav-link" data-scroll-target="#business-understanding">1. Business Understanding</a>
+  <ul class="collapse">
+  <li><a href="#context" id="toc-context" class="nav-link" data-scroll-target="#context">Context</a></li>
+  <li><a href="#hypothesis-to-test" id="toc-hypothesis-to-test" class="nav-link" data-scroll-target="#hypothesis-to-test">Hypothesis to Test</a></li>
+  </ul></li>
+  <li><a href="#data-understanding" id="toc-data-understanding" class="nav-link" data-scroll-target="#data-understanding">2. Data Understanding</a>
+  <ul class="collapse">
+  <li><a href="#data-description" id="toc-data-description" class="nav-link" data-scroll-target="#data-description">2.2 Data description</a></li>
+  </ul></li>
+  <li><a href="#data-preparation" id="toc-data-preparation" class="nav-link" data-scroll-target="#data-preparation">3. Data preparation</a>
+  <ul class="collapse">
+  <li><a href="#typecasting" id="toc-typecasting" class="nav-link" data-scroll-target="#typecasting">3.1 Typecasting</a></li>
+  <li><a href="#handling-duplicates" id="toc-handling-duplicates" class="nav-link" data-scroll-target="#handling-duplicates">3.2 Handling Duplicates</a></li>
+  <li><a href="#outlier-analysis" id="toc-outlier-analysis" class="nav-link" data-scroll-target="#outlier-analysis">3.3 Outlier Analysis</a></li>
+  <li><a href="#zero-near-zero-variance-features" id="toc-zero-near-zero-variance-features" class="nav-link" data-scroll-target="#zero-near-zero-variance-features">3.4 Zero &amp; Near Zero Variance Features</a></li>
+  <li><a href="#missing-values" id="toc-missing-values" class="nav-link" data-scroll-target="#missing-values">3.5 Missing values</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#hipothesis-testing" id="toc-hipothesis-testing" class="nav-link" data-scroll-target="#hipothesis-testing">4. Hipothesis Testing</a>
+  <ul class="collapse">
+  <li><a href="#los-géneros-difieren-en-user-rating" id="toc-los-géneros-difieren-en-user-rating" class="nav-link" data-scroll-target="#los-géneros-difieren-en-user-rating">¿Los géneros difieren en User Rating?</a>
+  <ul class="collapse">
+  <li><a href="#seleccionamos-la-hipotesis-y-el-nivel-de-significancia" id="toc-seleccionamos-la-hipotesis-y-el-nivel-de-significancia" class="nav-link" data-scroll-target="#seleccionamos-la-hipotesis-y-el-nivel-de-significancia">1. Seleccionamos la hipotesis y el nivel de significancia</a></li>
+  <li><a href="#identificamos-el-tipo-de-test" id="toc-identificamos-el-tipo-de-test" class="nav-link" data-scroll-target="#identificamos-el-tipo-de-test">2. Identificamos el tipo de test</a></li>
+  </ul></li>
+  <li><a href="#los-géneros-difieren-en-número-de-reviews" id="toc-los-géneros-difieren-en-número-de-reviews" class="nav-link" data-scroll-target="#los-géneros-difieren-en-número-de-reviews">¿Los géneros difieren en número de Reviews?</a>
+  <ul class="collapse">
+  <li><a href="#seleccionamos-la-hipotesis-y-el-nivel-de-significancia-1" id="toc-seleccionamos-la-hipotesis-y-el-nivel-de-significancia-1" class="nav-link" data-scroll-target="#seleccionamos-la-hipotesis-y-el-nivel-de-significancia-1">1. Seleccionamos la hipotesis y el nivel de significancia</a></li>
+  <li><a href="#identificamos-el-tipo-de-test-1" id="toc-identificamos-el-tipo-de-test-1" class="nav-link" data-scroll-target="#identificamos-el-tipo-de-test-1">2. Identificamos el tipo de test</a></li>
+  </ul></li>
+  <li><a href="#los-géneros-difieren-en-términos-de-price" id="toc-los-géneros-difieren-en-términos-de-price" class="nav-link" data-scroll-target="#los-géneros-difieren-en-términos-de-price">¿Los géneros difieren en términos de Price?</a>
+  <ul class="collapse">
+  <li><a href="#seleccionamos-la-hipotesis-y-el-nivel-de-significancia-2" id="toc-seleccionamos-la-hipotesis-y-el-nivel-de-significancia-2" class="nav-link" data-scroll-target="#seleccionamos-la-hipotesis-y-el-nivel-de-significancia-2">1. Seleccionamos la hipotesis y el nivel de significancia</a></li>
+  <li><a href="#identificamos-el-tipo-de-test-2" id="toc-identificamos-el-tipo-de-test-2" class="nav-link" data-scroll-target="#identificamos-el-tipo-de-test-2">2. Identificamos el tipo de test</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
-<main class="content quarto-banner-title-block" id="quarto-document-content">
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exploring Hypothesis Testing: A Series for Beginners 1</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">EDA</div>
+    <div class="quarto-category">hypothesis-testing</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A series of posts exploring hypothesis testing for beginners.
+  </div>
+</div>
 
 
+<div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Micael García </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 16, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
 
 <section id="exploring-hypothesis-testing-a-series-for-beginners" class="level1">
 <h1>Exploring Hypothesis Testing: A Series for Beginners</h1>
@@ -217,11 +260,21 @@ require(['plotly'], function(Plotly) {
 <li>¿Los géneros difieren en número de Reviews?</li>
 <li>¿Los géneros difieren en términos de precio?</li>
 </ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip with Title
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is an example of a callout with a title.</p>
+</div>
+</div>
 </section>
 </section>
-</section>
-<section id="probando" class="level1">
-<h1>probando</h1>
 <section id="data-understanding" class="level2">
 <h2 class="anchored" data-anchor-id="data-understanding">2. Data Understanding</h2>
 <div class="cell" data-execution_count="1">
