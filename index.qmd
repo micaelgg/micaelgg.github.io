@@ -2,7 +2,10 @@
 title: "My Blog"
 listing: 
   contents: posts # all Quarto docs in the `posts` directory will be included on your listing page
-  type: default # or `default` or `table`; each type has its own set of yaml options to include
+  type: default # 'grid' or `default` or `table`; each type has its own set of yaml options to include
   sort: "date desc" # can also sort on more than one field
   categories: true # allows you to sort posts by assigned categories 
+  date-format: iso # https://quarto.org/docs/websites/website-listings.html#categories
+  fields: [date, title, description, image]
+  page-size: 5
 ---

@@ -7,4 +7,5 @@
 # title-block-banner: true
 
 # enable table of contents for all documents
-toc : true
+toc: true
+toc-depth: 3
